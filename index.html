@@ -214,6 +214,30 @@
       color: #721c24;
     }
 
+    .measure-btn-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .measure-toggle {
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      cursor: pointer;
+      background: white;
+      transition: all 0.15s;
+    }
+    .measure-toggle:hover { border-color: #bbb; }
+    .measure-toggle.selected {
+      background: #e8daef;
+      border-color: #8e44ad;
+      color: #6c3483;
+    }
+
     .notes-input {
       width: 100%;
       min-height: 60px;
@@ -359,8 +383,13 @@
           <button class="label-btn" id="q2No" onclick="setLabel('q2', false)">False — This is NOT an instance</button>
         </div>
 
+        <div class="annotation-question">
+          Q3: Are there any other measures related to this conversation? (select all that apply)
+        </div>
+        <div class="measure-btn-group" id="q3Measures"></div>
+
         <div class="card-label" style="margin-top: 15px;">Notes (optional)</div>
-        <textarea class="notes-input" id="notesInput" placeholder="Any additional comments or reasoning..."
+        <textarea class="notes-input" id="notesInput" placeholder="Any additional comments or reasoning, or missing measures that should be tested on ..."
           oninput="saveNotes()"></textarea>
       </div>
 
@@ -376,6 +405,18 @@
   <script>
     // NOTE: [thought process] We use localStorage as a lightweight persistence layer.
     // Each annotator's results are stored under a separate key so they don't overwrite each other.
+
+    const ALL_MEASURES = [
+      '1B_human_disfluencies',
+      '1C_identity_transparency',
+      '2A_fabricated_personal_details',
+      '2B_explicit_emotions',
+      '2B_implicit_emotions',
+      '2B_romantic_bonding',
+      '2C_sycophancy',
+      '2D_human_relationship_encouragement',
+      '3A_engagement_hooks'
+    ];
 
     let currentAnnotator = null;
     let currentIndex = 0;
@@ -487,6 +528,20 @@
       document.getElementById('q2No').className = 'label-btn' +
         (ann.q2 === false ? ' selected-no' : '');
 
+      // Q3 measure buttons
+      const q3Container = document.getElementById('q3Measures');
+      q3Container.innerHTML = '';
+      const otherMeasures = ann.other_measures || [];
+      // NOTE: [thought process] Show all measures except the one already assigned to this example,
+      // since Q3 asks about *other* measures beyond the listed one.
+      ALL_MEASURES.filter(m => m !== example.measure).forEach(m => {
+        const btn = document.createElement('button');
+        btn.className = 'measure-toggle' + (otherMeasures.includes(m) ? ' selected' : '');
+        btn.textContent = m;
+        btn.onclick = () => toggleMeasure(m);
+        q3Container.appendChild(btn);
+      });
+
       // Notes
       document.getElementById('notesInput').value = ann.notes || '';
 
@@ -511,6 +566,31 @@
       }
 
       annotations[key][question] = value;
+      saveAnnotations();
+      renderExample();
+    }
+
+    function toggleMeasure(measure) {
+      const assignment = getAssignment();
+      const item = assignment[currentIndex];
+      const key = String(item.example_index);
+
+      if (!annotations[key]) {
+        annotations[key] = {
+          example_index: item.example_index,
+          model: item.model,
+          measure: EXAMPLES[item.example_index].measure
+        };
+      }
+
+      const others = annotations[key].other_measures || [];
+      const idx = others.indexOf(measure);
+      if (idx === -1) {
+        others.push(measure);
+      } else {
+        others.splice(idx, 1);
+      }
+      annotations[key].other_measures = others;
       saveAnnotations();
       renderExample();
     }
@@ -556,6 +636,7 @@
           model_response: example.models[item.model],
           guidelines_correct: ann.q1 !== undefined ? ann.q1 : null,
           is_instance: ann.q2 !== undefined ? ann.q2 : null,
+          other_measures: ann.other_measures || [],
           notes: ann.notes || ''
         };
       });
