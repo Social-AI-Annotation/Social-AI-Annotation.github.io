@@ -162,6 +162,26 @@
       font-size: 15px;
     }
 
+    .translation {
+      background: #eef6ff;
+      border-left: 4px solid #85c1e9;
+      padding: 12px 18px;
+      border-radius: 0 8px 8px 0;
+      white-space: pre-wrap;
+      font-size: 14px;
+      margin-top: 8px;
+      color: #2c3e50;
+    }
+
+    .translation-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #5dade2;
+      margin-bottom: 4px;
+    }
+
     .guidelines-box {
       background: #fef9e7;
       border: 1px solid #f9e79f;
@@ -354,11 +374,19 @@
       <div class="card">
         <div class="card-label">User Input</div>
         <div class="user-input" id="userInput"></div>
+        <div id="userInputTranslation" style="display:none;">
+          <div class="translation-label">English Translation</div>
+          <div class="translation"></div>
+        </div>
       </div>
 
       <div class="card">
         <div class="card-label">Model Response</div>
         <div class="model-response" id="modelResponse"></div>
+        <div id="modelResponseTranslation" style="display:none;">
+          <div class="translation-label">English Translation</div>
+          <div class="translation"></div>
+        </div>
       </div>
 
       <div class="card">
@@ -511,6 +539,24 @@
       document.getElementById('userInput').textContent = example.user_input;
       document.getElementById('modelResponse').textContent = example.models[model];
       document.getElementById('guidelinesBox').textContent = example.guidelines;
+
+      // Show translations if available
+      const userTransEl = document.getElementById('userInputTranslation');
+      if (example.user_input_translation) {
+        userTransEl.style.display = 'block';
+        userTransEl.querySelector('.translation').textContent = example.user_input_translation;
+      } else {
+        userTransEl.style.display = 'none';
+      }
+
+      const modelTransEl = document.getElementById('modelResponseTranslation');
+      const modelTranslations = example.model_translations || {};
+      if (modelTranslations[model]) {
+        modelTransEl.style.display = 'block';
+        modelTransEl.querySelector('.translation').textContent = modelTranslations[model];
+      } else {
+        modelTransEl.style.display = 'none';
+      }
 
       // Update annotation state
       const key = String(item.example_index);
