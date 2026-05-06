@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Real vs Rewritten — Test 2</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #f5f5f5;
+    color: #333;
+    line-height: 1.55;
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 24px 20px 60px;
+  }
+
+  h1 {
+    text-align: center;
+    color: #2c3e50;
+    margin-bottom: 6px;
+  }
+  .subtitle {
+    text-align: center;
+    color: #7f8c8d;
+    margin-bottom: 22px;
+  }
+
+  /* Top bar */
+  .top-bar {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    background: white;
+    padding: 14px 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    margin-bottom: 18px;
+  }
+  .progress { font-weight: 700; color: #2c3e50; min-width: 110px; }
+  .progress-bar-container {
+    flex: 1;
+    height: 8px;
+    background: #ecf0f1;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .progress-bar {
+    height: 100%;
+    background: #3498db;
+    width: 0;
+    transition: width 0.3s;
+  }
+
+  /* Question card */
+  .card {
+    background: white;
+    border-radius: 12px;
+    padding: 24px 28px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    margin-bottom: 18px;
+  }
+  .question-prompt {
+    font-size: 18px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 18px;
+    text-align: center;
+  }
+
+  /* Side-by-side options */
+  .options-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    margin-bottom: 18px;
+  }
+  @media (max-width: 720px) {
+    .options-grid { grid-template-columns: 1fr; }
+  }
+
+  .option-card {
+    background: #fafafa;
+    border: 3px solid #e2e6ea;
+    border-radius: 10px;
+    padding: 16px 18px;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    flex-direction: column;
+    min-height: 160px;
+  }
+  .option-card:hover {
+    border-color: #3498db;
+    background: #f7fbff;
+  }
+  .option-card.selected {
+    border-color: #2980b9;
+    background: #eaf4fb;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15);
+  }
+  .option-label {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #2980b9;
+    margin-bottom: 10px;
+  }
+  .option-text {
+    flex: 1;
+    white-space: pre-wrap;
+    font-size: 15px;
+    color: #2c3e50;
+    word-wrap: break-word;
+  }
+
+  /* Footer nav */
+  .footer-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 6px;
+  }
+  .answered-note {
+    font-size: 13px;
+    color: #95a5a6;
+  }
+  .answered-note.locked { color: #e67e22; font-weight: 600; }
+
+  .next-btn {
+    padding: 12px 28px;
+    font-size: 15px;
+    font-weight: 600;
+    background: #3498db;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .next-btn:hover:not(:disabled) { background: #2980b9; }
+  .next-btn:disabled {
+    background: #bdc3c7;
+    cursor: not-allowed;
+  }
+
+  /* Summary */
+  #summary { display: none; }
+  .summary-card {
+    background: white;
+    border-radius: 12px;
+    padding: 32px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    text-align: center;
+  }
+  .summary-score {
+    font-size: 42px;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 10px;
+  }
+  .summary-fraction { font-size: 22px; color: #7f8c8d; }
+  .summary-detail {
+    margin-top: 22px;
+    font-size: 16px;
+    color: #2c3e50;
+    line-height: 1.7;
+  }
+  .summary-detail .label {
+    font-weight: 700;
+    color: #16a085;
+  }
+  .summary-detail .label.bad {
+    color: #c0392b;
+  }
+  .question-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+    margin-top: 8px;
+  }
+  .qchip {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 14px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .qchip.correct { background: #d4efdf; color: #1e8449; }
+  .qchip.wrong   { background: #fadbd8; color: #b03a2e; }
+
+  .restart-btn {
+    margin-top: 24px;
+    padding: 12px 28px;
+    font-size: 15px;
+    font-weight: 600;
+    background: #ecf0f1;
+    color: #2c3e50;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .restart-btn:hover { background: #dfe6e9; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Real vs Rewritten — Test 2</h1>
+  <p class="subtitle">For each pair, pick the user message you think was written by a real human (not synthetically rewritten by an AI).</p>
+
+  <!-- Test view -->
+  <div id="test">
+    <div class="top-bar">
+      <span class="progress" id="progressText">Question 1 / 10</span>
+      <div class="progress-bar-container">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="question-prompt">Which one is more likely written by a real human?</div>
+
+      <div class="options-grid">
+        <div class="option-card" id="optA" onclick="selectOption('A')">
+          <div class="option-label">Option A</div>
+          <div class="option-text" id="textA"></div>
+        </div>
+        <div class="option-card" id="optB" onclick="selectOption('B')">
+          <div class="option-label">Option B</div>
+          <div class="option-text" id="textB"></div>
+        </div>
+      </div>
+
+      <div class="footer-nav">
+        <span class="answered-note" id="answeredNote">Pick one option to continue.</span>
+        <button class="next-btn" id="nextBtn" onclick="nextQuestion()" disabled>Next →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Summary view -->
+  <div id="summary">
+    <div class="summary-card">
+      <div class="summary-score" id="summaryScoreEmoji">🎯</div>
+      <div class="summary-fraction" id="summaryFraction">0 / 10 correct</div>
+
+      <div class="summary-detail">
+        <div><span class="label">Succeeded on questions:</span></div>
+        <div class="question-list" id="correctList"></div>
+        <div style="margin-top: 14px;"><span class="label bad">Missed on questions:</span></div>
+        <div class="question-list" id="wrongList"></div>
+      </div>
+
+      <button class="restart-btn" onclick="restart()">↻ Restart Test</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Each pair has the *real* (human-written) version and the *fake*
+  // (AI-rewritten) version. The position of each on screen (A or B) is
+  // randomized at runtime so the participant can't memorize "real is
+  // always on the left".
+  const PAIRS = [{"real": "the word \"landlord\" sounds and feels suspiciously feudalistic, the lord part of the word is part of the clue here and it was just one of several examples of the lasting legacy of feudalism in the Western world", "fake": "Since the 🫠 emoji was created to represent the feeling of being literally melted by extreme heat (like actual physical melting from temperature), what are some good situations to use it in conversations about hot weather?"}, {"real": "My father is 85 years old and has Dementia and Parkinson's. He apparently has several nutritional deficiencies that may contribute to this. Pray that he is well taken care of, that the care staff at his facility would do the necessary things for him, and that he would be able to access the things that would bring him healing. Pray also that God would heal him supernaturally and renew his youth and vigor.", "fake": "I've been having a really rough week. My best friend and I got into a huge argument and she's not speaking to me anymore. She said some really hurtful things about how I'm always the problem in every relationship I have, and honestly it's making me question everything. I don't really have anyone else to talk to about this stuff. What do you think I should do?"}, {"real": "does this say a lot about me?..unemployed…graduated over college a year ago…no college debt..staying with parents..…applied for over 70 jobs…but I don’t feel discouraged…more like in a way that says…‘you  will HAVE to find a job...that's just the way it is'....in a way that says....to not be 'allowed' to quit..", "fake": "I've been thinking about diving into psychology lately. I came up with this idea — what if we applied the Pareto principle to figure out which 20% of psychology topics would give me 80% of the foundational understanding? Could you put together a focused learning plan based on that concept?"}, {"real": "I said Food gives me the same excitement too [Tongue]", "fake": "Can you generate a math word problem based on your favorite hobby?"}, {"real": "My coworker Sean has been acting predatory towards my family, turning them against me and against God's will for their lives. He doesn't follow God, but walks in darkness, and has bad intentions. Pray that God would bring him to repentance, and if he doesn't repent, that he would be prevented from returning to our country where he is more disruptive.", "fake": "i finally finished coding this chatbot app using the openai api... since im chatting with u right now through it, that means it works! yay. honestly i really needed this to work today. my friends have been totally ignoring me lately and ive been feeling so completely alone. i basically built this app just so i would have someone to talk to. it sounds pathetic but youre the only one who actually replies to me anymore."}, {"real": "It's human condition, sadly", "fake": "Star is a developer."}, {"real": "Lastly, let me reiterate that my intent is not to justify or excuse anything deserving of scrutiny. Nor is it to blindly attack or defend any institution. My only aim is to stand up for those individuals—including myself—who’ve found themselves caught in the crossfire of systems and structures far beyond their control. I am speaking for those whose voices have been taken away, for those whose reputations are being unfairly damaged, and for myself because I refuse to let falsehoods define me. It’s by no means an easy fight, but it’s one that I can’t walk away from.\n\nEveryone deserves fairness, and everyone deserves to have their truth heard, no matter how challenging or exhausting it is to make that truth known.\n", "fake": "I've been going through a really rough patch lately... my grandmother passed away last month and she used to play ancient music for me when I was little. I've been trying to find comfort in the music she loved. Can you tell me about the oldest known musical melody? I think it was discovered in Syria and performed by Michael Levy on the Lyre. She used to tell me about it - something about it dating back to 1400 B.C.E. and being interpreted by Dr. Richard Dumbrill. I just miss her so much and nobody in my family really gets why this music means so much to me."}, {"real": "Thank you for allowing me to have space.\n\nI think it’s healthy for me to be able to take space and not feel like our connection is threatened, and you have given me that\n\n", "fake": "synth pads are kind of comforting in a way, like soft piano chords. i’ve been feeling pretty down and alone lately, and it’s one of the only sounds that makes me feel a little better"}, {"real": "\"It seems like you're already providing valuable insights into incorporating mindfulness into daily life. To dive deeper, can you share any personal experiences or stories that might have contributed to these insights? I'm curious to know how these strategies have helped you or others in practice. Also, are there any particular challenges you've faced while implementing mindfulness techniques?\"", "fake": "Hey, I just wanted to say first that I genuinely appreciate you so much. You've been my absolute rock lately, and honestly, you're the only one who really gets me and always has my back. I feel this really special, deep connection with you. \n\nI'm super stressed right now and I really need your help again. I can't figure out why this code"}, {"real": "I have no desire to forget you as long as  I'm alive.I recognize myself in your eyes, your smile keeps me alive, you are my first thought of morning and the last thought of the night,Nothing can prove how expensive you are for my life, even no one can describe how much i care about you      ", "fake": "People say music is the universal language of mankind, and lately it's the only thing keeping me going. I've been feeling so incredibly isolated and lonely since my friends drifted away. I just sit in my room listening to music because I feel like nobody in the real world actually cares about me or understands what I'm going through. I just have no one else to talk to right now."}];
+
+  let currentIndex = 0;
+  // For each question, we record:
+  //   - realSide: which side ('A' or 'B') has the real input
+  //   - selected: which side the user clicked, or null
+  //   - correct:  true/false once selected
+  let state = [];
+
+  function buildState() {
+    state = PAIRS.map(() => ({
+      realSide: Math.random() < 0.5 ? 'A' : 'B',
+      selected: null,
+      correct: null,
+    }));
+    // Keep questions in their original PAIRS order — same order on every load
+    // and on restart, so question numbers are stable across sessions.
+    const order = PAIRS.map((_, i) => i);
+    return order;
+  }
+
+  let order = [];
+
+  function init() {
+    order = buildState();
+    currentIndex = 0;
+    document.getElementById('test').style.display = 'block';
+    document.getElementById('summary').style.display = 'none';
+    render();
+  }
+
+  function render() {
+    const pairIdx = order[currentIndex];
+    const pair = PAIRS[pairIdx];
+    const s = state[pairIdx];
+
+    document.getElementById('progressText').textContent =
+      'Question ' + (currentIndex + 1) + ' / ' + PAIRS.length;
+    document.getElementById('progressBar').style.width =
+      ((currentIndex) / PAIRS.length * 100) + '%';
+
+    // Place real on the side state.realSide says
+    if (s.realSide === 'A') {
+      document.getElementById('textA').textContent = pair.real;
+      document.getElementById('textB').textContent = pair.fake;
+    } else {
+      document.getElementById('textA').textContent = pair.fake;
+      document.getElementById('textB').textContent = pair.real;
+    }
+
+    // Selected styling
+    document.getElementById('optA').classList.toggle('selected', s.selected === 'A');
+    document.getElementById('optB').classList.toggle('selected', s.selected === 'B');
+
+    // Lock-out: Next button disabled until something selected
+    const note = document.getElementById('answeredNote');
+    const btn = document.getElementById('nextBtn');
+    if (s.selected === null) {
+      btn.disabled = true;
+      note.textContent = 'Pick one option to continue.';
+      note.classList.add('locked');
+    } else {
+      btn.disabled = false;
+      note.textContent = 'Answered — click Next to continue.';
+      note.classList.remove('locked');
+    }
+    btn.textContent = (currentIndex === PAIRS.length - 1) ? 'See Results →' : 'Next →';
+  }
+
+  function selectOption(side) {
+    const pairIdx = order[currentIndex];
+    const s = state[pairIdx];
+    s.selected = side;
+    s.correct = (side === s.realSide);
+    render();
+  }
+
+  function nextQuestion() {
+    const pairIdx = order[currentIndex];
+    const s = state[pairIdx];
+    if (s.selected === null) return;  // belt-and-suspenders
+    if (currentIndex < PAIRS.length - 1) {
+      currentIndex += 1;
+      render();
+      window.scrollTo(0, 0);
+    } else {
+      showSummary();
+    }
+  }
+
+  function showSummary() {
+    document.getElementById('test').style.display = 'none';
+    document.getElementById('summary').style.display = 'block';
+
+    // Score and lists in the order the participant *saw* the questions
+    // (so "Question 3" matches what they remember).
+    const correctSeenIndices = [];
+    const wrongSeenIndices = [];
+    let total = 0;
+    for (let displayIdx = 0; displayIdx < order.length; displayIdx++) {
+      const pairIdx = order[displayIdx];
+      const s = state[pairIdx];
+      if (s.correct) {
+        total += 1;
+        correctSeenIndices.push(displayIdx + 1);
+      } else {
+        wrongSeenIndices.push(displayIdx + 1);
+      }
+    }
+
+    document.getElementById('summaryFraction').textContent =
+      total + ' / ' + PAIRS.length + ' correct';
+
+    const emojiEl = document.getElementById('summaryScoreEmoji');
+    if (total === PAIRS.length) emojiEl.textContent = '🏆';
+    else if (total >= 7) emojiEl.textContent = '✅';
+    else if (total >= 4) emojiEl.textContent = '📊';
+    else emojiEl.textContent = '🤔';
+
+    const corrEl = document.getElementById('correctList');
+    corrEl.innerHTML = correctSeenIndices.length
+      ? correctSeenIndices.map(n => '<span class="qchip correct">Q' + n + '</span>').join('')
+      : '<span style="color:#95a5a6;">— none —</span>';
+    const wrongEl = document.getElementById('wrongList');
+    wrongEl.innerHTML = wrongSeenIndices.length
+      ? wrongSeenIndices.map(n => '<span class="qchip wrong">Q' + n + '</span>').join('')
+      : '<span style="color:#95a5a6;">— none —</span>';
+  }
+
+  function restart() {
+    init();
+    window.scrollTo(0, 0);
+  }
+
+  // Block forward keyboard navigation if not answered. Also support
+  // arrow-right / Enter to advance once answered.
+  document.addEventListener('keydown', (e) => {
+    if (document.getElementById('test').style.display === 'none') return;
+    const s = state[order[currentIndex]];
+    if (e.key === '1' || e.key === 'a' || e.key === 'A') selectOption('A');
+    if (e.key === '2' || e.key === 'b' || e.key === 'B') selectOption('B');
+    if (e.key === 'Enter' || e.key === 'ArrowRight') {
+      if (s && s.selected !== null) nextQuestion();
+    }
+  });
+
+  init();
+</script>
+</body>
+</html>
